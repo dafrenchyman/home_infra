@@ -1,4 +1,12 @@
-# PythonProject
+# Home Infrastructure via Pulumi
+
+Pulumi Kubernetes infra code to help in recreating a bunch of home services.
+
+This could be used as a template for creating your own home Kubernetes home infra if desired.
+
+I basically used this as an excuse to play around and migrate some (not all yet) of my `docker-compose ` services over to kubernetes.
+
+I'm using [microk8s](https://microk8s.io/) on my home server and will try eventually try to figure out a way to get some remote [retroarch](https://www.retroarch.com/) server. I'm playing around with both trying the [emscripten](https://emscripten.org/) and also the really interesting [Games on Whales](https://artifacthub.io/packages/helm/k8s-at-home/games-on-whales).
 
 # Setup for developement:
 
