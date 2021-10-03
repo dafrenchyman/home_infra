@@ -4,5 +4,44 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-numpy==1.18.4
+arpeggio==1.10.2
+    # via parver
+attrs==21.2.0
+    # via parver
+certifi==2021.5.30
+    # via requests
+charset-normalizer==2.0.6
+    # via requests
+dill==0.3.4
+    # via pulumi
+grpcio==1.41.0
+    # via pulumi
+idna==3.2
+    # via requests
+parver==0.3.1
+    # via pulumi-kubernetes
+protobuf==3.18.0
+    # via pulumi
+pulumi==3.13.2
+    # via
+    #   -r requirements.in
+    #   pulumi-kubernetes
+pulumi-kubernetes==3.7.3
     # via -r requirements.in
+pyyaml==5.4.1
+    # via
+    #   pulumi
+    #   pulumi-kubernetes
+requests==2.26.0
+    # via pulumi-kubernetes
+semver==2.13.0
+    # via
+    #   pulumi
+    #   pulumi-kubernetes
+six==1.16.0
+    # via
+    #   grpcio
+    #   parver
+    #   pulumi
+urllib3==1.26.7
+    # via requests
