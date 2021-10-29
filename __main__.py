@@ -5,24 +5,35 @@ import json
 
 import pulumi
 from pulumi_kubernetes.apps.v1 import Deployment
+from pulumi_kubernetes.batch.v1 import JobSpecArgs
+from pulumi_kubernetes.batch.v1beta1 import (
+    CronJob,
+    CronJobSpecArgs,
+    JobTemplateSpecArgs,
+)
 from pulumi_kubernetes.core.v1 import (
+    ContainerArgs,
     Namespace,
     PersistentVolume,
     PersistentVolumeClaim,
     Pod,
+    PodSpecArgs,
+    PodTemplateSpecArgs,
     Secret,
     Service,
     ServicePortArgs,
     ServiceSpecArgs,
 )
 from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
-from pulumi_kubernetes.networking.v1beta1 import (
+from pulumi_kubernetes.networking.v1 import (
     HTTPIngressPathArgs,
     HTTPIngressRuleValueArgs,
     Ingress,
     IngressBackendArgs,
     IngressRuleArgs,
+    IngressServiceBackendArgs,
     IngressSpecArgs,
+    ServiceBackendPortArgs,
 )
 
 config = pulumi.Config()
@@ -40,14 +51,18 @@ PLEX_SHARES_JSON = config.require("plex_shares_json")
 GOV_DOCKER_RUNTIME = "nvidia"
 GOW_GPU_UUID = "GPU-b141db0f-29f7-809e-16d5-582f02adb91c"
 
-ENABLE_TEST_SERVICES = False
+
 ENABLE_FRESH_RSS = True
-ENABLE_UBOOQUITY = True
-ENABLE_TRANSMISSION = True
-ENABLE_DASHBOARD = False
-ENABLE_WIKI_JS = True
+ENABLE_DASHBOARD = True
+ENABLE_ML_FLOW = True
 ENABLE_ORGANIZR = True
 ENABLE_PLEX = True
+ENABLE_TRANSMISSION = True
+ENABLE_UBOOQUITY = True
+ENABLE_WIKI_JS = True
+
+ENABLE_TEST_SERVICES = False
+CRON_JOB_TEST = False
 
 
 def create_pvc(name, path, access_mode="ReadWriteMany", size="1Gi", mount_path=""):
@@ -55,6 +70,7 @@ def create_pvc(name, path, access_mode="ReadWriteMany", size="1Gi", mount_path="
     volume = PersistentVolume(
         clean_name,
         metadata={
+            "name": f"{clean_name}-pv",
             "labels": {"type": "local"},
         },
         spec={
@@ -71,7 +87,7 @@ def create_pvc(name, path, access_mode="ReadWriteMany", size="1Gi", mount_path="
     claim = PersistentVolumeClaim(
         clean_name,
         metadata={
-            "name": clean_name,
+            "name": f"{clean_name}-pvc",
         },
         spec={
             "storageClassName": "normal",  # f"{name}-sc",
@@ -81,6 +97,7 @@ def create_pvc(name, path, access_mode="ReadWriteMany", size="1Gi", mount_path="
                     "storage": size,
                 }
             },
+            "volumeName": f"{clean_name}-pv",
         },
     )
 
@@ -94,14 +111,14 @@ def create_pvc(name, path, access_mode="ReadWriteMany", size="1Gi", mount_path="
 
 
 def transmission_chart():
-    _, transmission_config_claim, _ = create_pvc(
+    transmission_config_volume, transmission_config_claim, _ = create_pvc(
         name="transmission-config",
         path="/mnt/8TB_01/kube_config/config/transmission",
         size="1Gi",
         access_mode="ReadWriteMany",
     )
 
-    _, transmission_data_claim, _ = create_pvc(
+    transmission_data_volume, transmission_data_claim, _ = create_pvc(
         name="transmission-data",
         path="/mnt/8TB_01/kube_config/data/transmission",
         size="200Gi",
@@ -177,7 +194,9 @@ def transmission_chart():
                 ],
                 "volumes": [
                     {
-                        "name": "transmission-config",
+                        "name": transmission_config_volume.metadata.apply(
+                            lambda v: v["name"]
+                        ),
                         "persistentVolumeClaim": {
                             "claimName": transmission_config_claim.metadata.apply(
                                 lambda v: v["name"]
@@ -185,7 +204,9 @@ def transmission_chart():
                         },
                     },
                     {
-                        "name": "transmission-data",
+                        "name": transmission_data_volume.metadata.apply(
+                            lambda v: v["name"]
+                        ),
                         "persistentVolumeClaim": {
                             "claimName": transmission_data_claim.metadata.apply(
                                 lambda v: v["name"]
@@ -201,27 +222,27 @@ def transmission_chart():
                 ],
                 "volumeMounts": [
                     {  # Configuration
-                        "name": transmission_config_claim.metadata.apply(
+                        "name": transmission_config_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/transmission-home",
                     },
                     {  # Folder to watch
-                        "name": transmission_data_claim.metadata.apply(
+                        "name": transmission_data_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/watch",
                         "subPath": "watch",
                     },
                     {  # Incomplete Torrents
-                        "name": transmission_data_claim.metadata.apply(
+                        "name": transmission_data_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/incomplete",
                         "subPath": "incomplete",
                     },
                     {  # Completed Torrents
-                        "name": transmission_data_claim.metadata.apply(
+                        "name": transmission_data_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/completed",
@@ -254,11 +275,14 @@ def transmission_chart():
                         paths=[
                             HTTPIngressPathArgs(
                                 path="/",
+                                path_type="Prefix",
                                 backend=IngressBackendArgs(
-                                    service_name=transmission.get_resource(
-                                        "v1/Service", "transmission-openvpn"
-                                    ).metadata["name"],
-                                    service_port=80,
+                                    service=IngressServiceBackendArgs(
+                                        name=transmission.get_resource(
+                                            "v1/Service", "transmission-openvpn"
+                                        ).metadata["name"],
+                                        port=ServiceBackendPortArgs(number=80),
+                                    ),
                                 ),
                             ),
                         ]
@@ -365,6 +389,7 @@ def ubooquity_chart():
                     "TZ": TIMEZONE,
                     "PUID": UID,
                     "PGID": GID,
+                    "MAXMEM": "2048",
                 },
                 "persistence": {
                     "config": config_map,
@@ -642,6 +667,153 @@ def wiki_js_chart():
     return
 
 
+def ml_flow_chart():
+    minio_access_key = "minio"
+    minio_secret_key = "minio123"  # pragma: allowlist secret
+
+    _, minio_pvc, _ = create_pvc(
+        name="mlflow-minio",
+        path="/mnt/8TB_01/kube_config/config/mlflow_minio",
+        size="8Gi",
+        access_mode="ReadWriteOnce",
+    )
+
+    _ = Chart(
+        "minio",
+        config=ChartOpts(
+            chart="minio",
+            version="8.1.9",
+            fetch_opts=FetchOpts(
+                repo="https://charts.bitnami.com/bitnami",
+            ),
+            values={
+                "podSecurityContext": {
+                    "fsGroup": 1000,
+                },
+                "containerSecurityContext": {
+                    "runAsUser": 1000,
+                },
+                "nameOverride": "mlflow-minio",
+                "accessKey": {
+                    "password": minio_access_key,
+                },
+                "secretKey": {
+                    "password": minio_secret_key,
+                },
+                # "mode": "standalone",
+                # "ingress": {
+                #     "enabled": "true",
+                #     "hostname": f"minio.{KUBE_NODE_HOST}",
+                # },
+                "persistence": {
+                    "enabled": "false",
+                    "existingClaim": minio_pvc.metadata.apply(lambda v: v["name"]),
+                },
+                "statefulset": {
+                    "replicaCount": 1,
+                },
+                # "podAnnotations": {
+                #     "prometheus.io/scrape": "true",
+                #     "prometheus.io/path": "/minio/v2/metrics/cluster",
+                #     "prometheus.io/port": 9000,
+                # }
+            },
+        ),
+    )
+
+    # user = pulumi_minio.IamUser("python-user")
+
+    mysql_root_password = "mlflow123"  # pragma: allowlist secret
+    mysql_database = "mlflow"
+    mysql_username = "mlflow"
+    mysql_password = "mlflow123"  # pragma: allowlist secret
+
+    _, mlflow_mysql_pvc, _ = create_pvc(
+        name="mlflow-mysql",
+        path="/mnt/8TB_01/kube_config/config/mlflow_mysql",
+        size="8Gi",
+        access_mode="ReadWriteOnce",
+    )
+
+    if True:
+        _ = Chart(
+            "mysql",
+            config=ChartOpts(
+                chart="mysql",
+                version="8.8.10",
+                fetch_opts=FetchOpts(
+                    repo="https://charts.bitnami.com/bitnami",
+                ),
+                values={
+                    "image": {"debug": True},
+                    "nameOverride": "mlflow",
+                    "architecture": "standalone",
+                    "auth": {
+                        "rootPassword": mysql_root_password,
+                        "database": mysql_database,
+                        "username": mysql_username,
+                        "password": mysql_password,
+                        "forcePassword": True,
+                    },
+                    "primary": {
+                        "podSecurityContext": {
+                            "fsGroup": 1000,
+                        },
+                        "containerSecurityContext": {
+                            "runAsUser": 1000,
+                        },
+                        # "hostAliases": [
+                        #     f"mlflow-mysql.{KUBE_NODE_HOST}"
+                        # ],
+                        "persistence": {
+                            "enabled": True,
+                            "existingClaim": mlflow_mysql_pvc.metadata.apply(
+                                lambda v: v["name"]
+                            ),
+                        },
+                    },
+                    "secondary": {
+                        "replicaCount": 0,
+                    },
+                },
+            ),
+        )
+
+    if False:
+        _ = Chart(
+            "mlflow",
+            config=ChartOpts(
+                chart="mlflow",
+                version="1.5.1",
+                fetch_opts=FetchOpts(
+                    repo="https://cetic.github.io/helm-charts",
+                ),
+                values={
+                    "image": {
+                        "repository": "sabman/mlflow",
+                        "tag": "latest",
+                    },
+                    # "db": {
+                    #     "host": "mysql",
+                    #     "port": 3306,
+                    #     "user": mysql_username,
+                    #     "password": mysql_password,
+                    #     "database": mysql_database,
+                    # },
+                    "minio": {
+                        "accessKey": minio_access_key,
+                        "secretKey": minio_secret_key,
+                    },
+                    "ingress": {
+                        "enabled": "true",
+                        "hosts": [f"mlflow.{KUBE_NODE_HOST}"],
+                    },
+                },
+            ),
+        )
+    return
+
+
 def apple_service():
     Pod(
         "apple",
@@ -760,46 +932,17 @@ def nginx_service():
 
 
 def kube_dashboard():
-    if False:
-        Chart(
-            "kubernetes-dashboard",
-            config=ChartOpts(
-                chart="kubernetes-dashboard",
-                version="5.0.0",
-                fetch_opts=FetchOpts(
-                    repo="https://kubernetes.github.io/dashboard/",
-                ),
+    Chart(
+        "kubernetes-dashboard",
+        config=ChartOpts(
+            chart="kubernetes-dashboard",
+            version="5.0.0",
+            fetch_opts=FetchOpts(
+                repo="https://kubernetes.github.io/dashboard/",
             ),
-        )
-
-    Ingress(
-        "dashboard-ingress",
-        metadata={
-            # "namespace": media_namespace.metadata.apply(lambda v: v["name"]),
-            "name": "dashboard-ingress",
-            "annotations": {
-                "kubernetes.io/ingress.class": "nginx",
-                "nginx.ingress.kubernetes.io/backend-protocol": "HTTPS",
+            values={
+                "ingress": {"enabled": "true", "hosts": [f"kube-dash.{KUBE_NODE_HOST}"]}
             },
-            "namespace": "kube-system",
-        },
-        spec=IngressSpecArgs(
-            rules=[
-                IngressRuleArgs(
-                    host="dashboard.localhost",
-                    http=HTTPIngressRuleValueArgs(
-                        paths=[
-                            HTTPIngressPathArgs(
-                                path="/",
-                                backend=IngressBackendArgs(
-                                    service_name="kubernetes-dashboard",
-                                    service_port=443,
-                                ),
-                            ),
-                        ]
-                    ),
-                ),
-            ],
         ),
     )
     return
@@ -851,6 +994,87 @@ def gow_chart():
     return
 
 
+def cron_job_test():
+    CronJob(
+        resource_name="failing-cron",
+        metadata={"name": "failing-cron"},
+        spec=CronJobSpecArgs(
+            schedule="*/5 * * * *",
+            job_template=JobTemplateSpecArgs(
+                spec=JobSpecArgs(
+                    template=PodTemplateSpecArgs(
+                        spec=PodSpecArgs(
+                            restart_policy="Never",
+                            containers=[
+                                ContainerArgs(
+                                    name="failing-cron",
+                                    image="ubuntu",
+                                    image_pull_policy="IfNotPresent",
+                                    command=["/bin/bash", "-c", "exit 1;"],
+                                )
+                            ],
+                        )
+                    )
+                )
+            ),
+        ),
+    )
+
+    CronJob(
+        resource_name="failing-cron-single",
+        metadata={"name": "failing-cron-single"},
+        spec=CronJobSpecArgs(
+            schedule="*/5 * * * *",
+            concurrency_policy="Forbid",
+            failed_jobs_history_limit=1,
+            job_template=JobTemplateSpecArgs(
+                spec=JobSpecArgs(
+                    backoff_limit=0,
+                    template=PodTemplateSpecArgs(
+                        spec=PodSpecArgs(
+                            restart_policy="Never",
+                            containers=[
+                                ContainerArgs(
+                                    name="failing-cron-single",
+                                    image="ubuntu",
+                                    image_pull_policy="IfNotPresent",
+                                    command=["/bin/bash", "-c", "exit 1;"],
+                                )
+                            ],
+                        )
+                    ),
+                )
+            ),
+        ),
+    )
+
+    CronJob(
+        resource_name="successful-cron",
+        metadata={"name": "successful-cron"},
+        spec=CronJobSpecArgs(
+            schedule="*/5 * * * *",
+            job_template=JobTemplateSpecArgs(
+                spec=JobSpecArgs(
+                    template=PodTemplateSpecArgs(
+                        spec=PodSpecArgs(
+                            restart_policy="Never",
+                            containers=[
+                                ContainerArgs(
+                                    name="successful-cron",
+                                    image="ubuntu",
+                                    image_pull_policy="IfNotPresent",
+                                    command=["/bin/bash", "-c", "exit 0;"],
+                                )
+                            ],
+                        )
+                    )
+                )
+            ),
+        ),
+    )
+    return
+
+
 def main():
 
     Namespace(
@@ -860,17 +1084,18 @@ def main():
         },
     )
 
-    Chart(
-        "nvidia-device-plugin",
-        config=ChartOpts(
-            chart="nvidia-device-plugin",
-            # namespace=media_namespace.metadata.apply(lambda v: v["name"]),
-            version="0.9.0",
-            fetch_opts=FetchOpts(
-                repo="https://nvidia.github.io/k8s-device-plugin",
+    if False:
+        Chart(
+            "nvidia-device-plugin",
+            config=ChartOpts(
+                chart="nvidia-device-plugin",
+                # namespace=media_namespace.metadata.apply(lambda v: v["name"]),
+                version="0.9.0",
+                fetch_opts=FetchOpts(
+                    repo="https://nvidia.github.io/k8s-device-plugin",
+                ),
             ),
-        ),
-    )
+        )
 
     if ENABLE_TRANSMISSION:
         transmission_chart()
@@ -893,9 +1118,15 @@ def main():
     if ENABLE_PLEX:
         plex_chart()
 
+    if ENABLE_ML_FLOW:
+        ml_flow_chart()
+
     if ENABLE_TEST_SERVICES:
         apple_service()
         nginx_service()
+
+    if CRON_JOB_TEST:
+        cron_job_test()
     return
 
 
