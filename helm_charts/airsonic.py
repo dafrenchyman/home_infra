@@ -15,7 +15,7 @@ def airsonic(config_folder_root: str, hostname: str, timezone: str, uid=1000, gi
         name="airsonic-music-pool",
         path="/mnt/SnapSsdArray_01/pool/Music",
         size="10Gi",
-        access_mode="ReadWriteMany",
+        access_mode="ReadOnlyMany",
         mount_path="/var/music",
     )
 
@@ -23,7 +23,7 @@ def airsonic(config_folder_root: str, hostname: str, timezone: str, uid=1000, gi
         name="airsonic-music",
         path="/mnt/SnapSsdArray_01/SnapDisk_4TB_05/Music",
         size="10Gi",
-        access_mode="ReadWriteMany",
+        access_mode="ReadOnlyMany",
         mount_path="/mnt/SnapSsdArray_01/SnapDisk_4TB_05/Music",
     )
 
@@ -40,6 +40,7 @@ def airsonic(config_folder_root: str, hostname: str, timezone: str, uid=1000, gi
                     "TZ": timezone,
                     "PUID": uid,
                     "PGID": gid,
+                    "JAVA_OPTS": "-Xmx1024m",
                 },
                 "persistence": {
                     "config": config_map,
