@@ -9,6 +9,7 @@ def create_pvc(
     size="1Gi",
     mount_path="",
     storage_class_name="microk8s-hostpath",
+    namespace="default",
 ):
     clean_name = name.lower().replace("_", "-")
     volume = PersistentVolume(
@@ -16,6 +17,7 @@ def create_pvc(
         metadata={
             "name": f"{clean_name}-pv",
             "labels": {"type": "local"},
+            "namespace": namespace,
         },
         spec=PersistentVolumeSpec(
             persistent_volume_reclaim_policy="Retain",
@@ -32,6 +34,7 @@ def create_pvc(
         clean_name,
         metadata={
             "name": f"{clean_name}-pvc",
+            "namespace": namespace,
         },
         spec={
             "storageClassName": storage_class_name,

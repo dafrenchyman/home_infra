@@ -11,6 +11,7 @@ from helm_charts.netbootxyz import netbootxyz
 from helm_charts.nzbhydra2 import nzbhydra2
 from helm_charts.organizr import organizr
 from helm_charts.plex import plex
+from helm_charts.prometheus import prometheus
 from helm_charts.transmission import transmission
 from helm_charts.ubooquity import ubooquity
 from helm_charts.wiki_js import wiki_js
@@ -27,6 +28,7 @@ OPENVPN_PROVIDER = config.require("openvpn_provider")
 OPENVPN_CONFIG = config.require("openvpn_config")
 OPENVPN_USERNAME = config.require("pia_username")
 OPENVPN_PASSWORD = config.require("pia_password")
+GRAFANA_PASSWORD = config.require("grafana_password")
 KUBE_NODE_HOST = config.require("kube_node_host")
 PLEX_SHARES_JSON = config.require("plex_shares_json")
 
@@ -41,6 +43,7 @@ ENABlE_NETBOOTXYZ = True
 ENABLE_NZBHYDRA2 = True
 ENABLE_ORGANIZR = True
 ENABLE_PLEX = True
+ENABLE_PROMETHEUS = True
 ENABLE_TRANSMISSION = True
 ENABLE_UBOOQUITY = True
 ENABLE_WIKI_JS = True
@@ -61,6 +64,15 @@ def main():
             "name": "media",
         },
     )
+
+    if ENABLE_PROMETHEUS:
+        prometheus(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            hostname=KUBE_NODE_HOST,
+            grafana_password=GRAFANA_PASSWORD,
+            uid=UID,
+            gid=GID,
+        )
 
     if False:
         Chart(

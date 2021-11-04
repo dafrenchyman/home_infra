@@ -14,6 +14,7 @@ helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
 
 # Setup Prometheus
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
 
 # Setup MLFlow
 # helm repo add minio https://operator.min.io/
