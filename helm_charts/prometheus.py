@@ -4,7 +4,13 @@ from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
 
 
 def prometheus(
-    config_folder_root: str, hostname: str, grafana_password: str, uid=1000, gid=1000
+    config_folder_root: str,
+    hostname: str,
+    grafana_password: str,
+    ambient_weather_api_key: str,
+    timezone: str,
+    uid=1000,
+    gid=1000,
 ):
     Namespace(
         "monitor",
@@ -204,6 +210,30 @@ def prometheus(
                         "runAsUser": int(uid),
                         "runAsGroup": int(gid),
                         "fsGroup": int(gid),
+                    },
+                },
+            ),
+        )
+
+    # Ambient Weather Prometheus Exporter
+    if True:
+        Chart(
+            "ambient-weather-prometheus-exporter",
+            config=ChartOpts(
+                chart="ambient-weather-prometheus-exporter",  # Not really going to use this container
+                version="0.1.0",
+                fetch_opts=FetchOpts(
+                    repo="https://charts.mrsharky.com/",
+                ),
+                values={
+                    "env": {
+                        "TZ": timezone,
+                        "AMBIENT_API_KEY": ambient_weather_api_key,
+                    },
+                    "service": {
+                        "main": {
+                            "enabled": "true",
+                        },
                     },
                 },
             ),

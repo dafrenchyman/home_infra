@@ -6,6 +6,7 @@ from cron_jobs.jobs import cron_job_test
 from helm_charts.airsonic import airsonic
 from helm_charts.freshrss import freshrss
 from helm_charts.kube_dashboard import kube_dashboard
+from helm_charts.mariadb import mariadb
 from helm_charts.mlflow import ml_flow
 from helm_charts.netbootxyz import netbootxyz
 from helm_charts.nzbhydra2 import nzbhydra2
@@ -20,6 +21,7 @@ from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
 from services.misc import apple_service, nginx_service
 
 config = pulumi.Config()
+AMBIENT_WEATHER_API_KEY = config.require("ambient_weather_api_key")
 CIDR = config.require("CIDR")
 TIMEZONE = config.require("timezone")
 UID = config.require("uid")
@@ -47,6 +49,7 @@ ENABLE_PROMETHEUS = True
 ENABLE_TRANSMISSION = True
 ENABLE_UBOOQUITY = True
 ENABLE_WIKI_JS = True
+ENABLE_MARIADB = True
 
 ENABLE_TEST_SERVICES = False
 CRON_JOB_TEST = False
@@ -70,6 +73,8 @@ def main():
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
             hostname=KUBE_NODE_HOST,
             grafana_password=GRAFANA_PASSWORD,
+            ambient_weather_api_key=AMBIENT_WEATHER_API_KEY,
+            timezone=TIMEZONE,
             uid=UID,
             gid=GID,
         )
@@ -181,6 +186,9 @@ def main():
             uid=UID,
             gid=GID,
         )
+
+    if ENABLE_MARIADB:
+        mariadb(hostname=KUBE_NODE_HOST, uid=UID, gid=GID)
 
     if ENABLE_ML_FLOW:
         ml_flow(

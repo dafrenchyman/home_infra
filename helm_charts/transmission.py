@@ -105,6 +105,10 @@ def transmission(
                         "name": "TRANSMISSION_IDLE_SEEDING_LIMIT_ENABLED",
                         "value": "true",
                     },
+                    {
+                        "name": "TRANSMISSION_WEB_UI",
+                        "value": "flood-for-transmission",
+                    },
                     {"name": "WEBPROXY_ENABLED", "value": "false"},
                     {"name": "TZ", "value": timezone},
                 ],

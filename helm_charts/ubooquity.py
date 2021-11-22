@@ -31,17 +31,12 @@ def ubooquity(
     Chart(
         "ubooquity",
         config=ChartOpts(
-            chart="reg",  # Not really going to use this container
-            version="3.0.1",
+            chart="ubooquity",  # Not really going to use this container
+            version="0.1.0",
             fetch_opts=FetchOpts(
-                repo="https://k8s-at-home.com/charts/",
+                repo="https://charts.mrsharky.com/",
             ),
             values={
-                "image": {
-                    "repository": "ghcr.io/linuxserver/ubooquity",
-                    "tag": "2.1.2-ls74",
-                    "pullPolicy": "IfNotPresent",
-                },
                 "env": {
                     "TZ": timezone,
                     "PUID": uid,
@@ -53,26 +48,9 @@ def ubooquity(
                     "books": books_map,
                     "comics": comics_map,
                 },
-                "service": {
-                    "main": {
-                        "enabled": "true",
-                        "nameOverride": "ubooquity",
-                        "ports": {
-                            "http": {"enabled": "true", "port": 2202},
-                        },
-                    },
-                    "admin": {
-                        "enabled": "true",
-                        "nameOverride": "ubooquity-admin",
-                        "ports": {
-                            "admin": {"enabled": "true", "port": 2203},
-                        },
-                    },
-                },
                 "ingress": {
                     "main": {
                         "enabled": "true",
-                        "nameOverride": "ubooquity",
                         "hosts": [
                             {
                                 "host": f"ubooquity.{hostname}",  # /ubooquity/
@@ -80,8 +58,7 @@ def ubooquity(
                                     {
                                         "path": "/",
                                         "service": {
-                                            # The "name" is odd because we hijacked the reg helm
-                                            "name": "ubooquity-reg-ubooquity",
+                                            "name": "ubooquity",
                                             "port": 2202,
                                         },
                                     }
@@ -93,8 +70,7 @@ def ubooquity(
                                     {
                                         "path": "/",
                                         "service": {
-                                            # The "name" is odd because we hijacked the reg helm
-                                            "name": "ubooquity-reg-ubooquity-admin",
+                                            "name": "ubooquity-admin",
                                             "port": 2203,
                                         },
                                     }
