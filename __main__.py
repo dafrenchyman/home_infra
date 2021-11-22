@@ -188,7 +188,12 @@ def main():
         )
 
     if ENABLE_MARIADB:
-        mariadb(hostname=KUBE_NODE_HOST, uid=UID, gid=GID)
+        mariadb(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            # hostname=KUBE_NODE_HOST,
+            uid=UID,
+            gid=GID,
+        )
 
     if ENABLE_ML_FLOW:
         ml_flow(
