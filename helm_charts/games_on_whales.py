@@ -1,7 +1,7 @@
 from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
 
 
-def games_on_whales(nvidia_devices, timezone, uid=1000, gid=1000):
+def games_on_whales(timezone, uid=1000, gid=1000):
     Chart(
         "games-on-whales",
         config=ChartOpts(
@@ -18,18 +18,21 @@ def games_on_whales(nvidia_devices, timezone, uid=1000, gid=1000):
                     "enabled": False,
                 },
                 "retroarch": {
-                    "image": {
-                        "repository": "dafrenchyman/retroarch",
-                        "tag": "latest",
-                        "pullPolicy": "IfNotPresent",
-                    },
+                    "enabled": True,
+                    # "image": {
+                    #     "repository": "dafrenchyman/retroarch",
+                    #     "tag": "latest",
+                    #     "pullPolicy": "IfNotPresent",
+                    # },
                 },
                 "xorg": {
-                    "image": {
-                        "repository": "dafrenchyman/xorg",
-                        "tag": "latest",
-                        "pullPolicy": "IfNotPresent",
-                    },
+                    "enabled": False,
+                    "display": ":0",
+                    # "image": {
+                    #     "repository": "dafrenchyman/xorg",
+                    #     "tag": "latest",
+                    #     "pullPolicy": "IfNotPresent",
+                    # },
                 },
                 "sunshine": {
                     "env": {
@@ -37,8 +40,8 @@ def games_on_whales(nvidia_devices, timezone, uid=1000, gid=1000):
                         "PUID": uid,
                         "PGID": gid,
                         # "DISPLAY": "${XORG_DISPLAY}",
-                        "NVIDIA_DRIVER_CAPABILITIES": "utility,video,graphics,display",
-                        "NVIDIA_VISIBLE_DEVICES": nvidia_devices,
+                        # "NVIDIA_DRIVER_CAPABILITIES": "utility,video,graphics,display",
+                        # "NVIDIA_VISIBLE_DEVICES": nvidia_devices,
                     },
                 },
             },
