@@ -20,6 +20,7 @@ idna==3.2
     # via requests
 parver==0.3.1
     # via
+    #   pulumi-aws
     #   pulumi-kubernetes
     #   pulumi-minio
 protobuf==3.18.0
@@ -27,8 +28,11 @@ protobuf==3.18.0
 pulumi==3.13.2
     # via
     #   -r requirements.in
+    #   pulumi-aws
     #   pulumi-kubernetes
     #   pulumi-minio
+pulumi-aws==4.33.0
+    # via -r requirements.in
 pulumi-kubernetes==3.7.3
     # via -r requirements.in
 pulumi-minio==0.1.0
@@ -46,6 +50,7 @@ requests==2.26.0
 semver==2.13.0
     # via
     #   pulumi
+    #   pulumi-aws
     #   pulumi-kubernetes
     #   pulumi-minio
 six==1.16.0
