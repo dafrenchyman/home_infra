@@ -10,6 +10,7 @@ from helm_charts.freshrss import freshrss
 from helm_charts.games_on_whales import games_on_whales
 from helm_charts.kube_dashboard import kube_dashboard
 from helm_charts.mariadb import mariadb
+from helm_charts.mealie import mealie
 from helm_charts.mlflow import ml_flow
 from helm_charts.netbootxyz import netbootxyz
 from helm_charts.nzbhydra2 import nzbhydra2
@@ -49,6 +50,7 @@ ENABLE_DASHBOARD = False
 ENABLE_DROPBOX = False
 ENABLE_FRESH_RSS = True
 ENABLE_GOW = False
+ENABLE_MEALIE = False
 ENABLE_ML_FLOW = False
 ENABlE_NETBOOTXYZ = True
 ENABLE_NZBHYDRA2 = True
@@ -77,29 +79,6 @@ def main():
         },
     )
 
-    if ENABLE_BLUECHERRY:
-        bluecherry(
-            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            recordings_folder="/mnt/8TB_01/dropbox/data/Security/BlueCherryKube",
-            hostname=KUBE_NODE_HOST,
-            timezone=TIMEZONE,
-            mysql_root_password=BLUECHERRY_MYSQL_ROOT_PASSWORD,
-            bluecherry_password=BLUECHERRY_DB_USER_PASSWORD,
-            uid=UID,
-            gid=GID,
-        )
-
-    if ENABLE_PROMETHEUS:
-        prometheus(
-            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            hostname=KUBE_NODE_HOST,
-            grafana_password=GRAFANA_PASSWORD,
-            ambient_weather_api_key=AMBIENT_WEATHER_API_KEY,
-            timezone=TIMEZONE,
-            uid=UID,
-            gid=GID,
-        )
-
     if False:
         Chart(
             "nvidia-device-plugin",
@@ -113,28 +92,33 @@ def main():
             ),
         )
 
-    if ENABLE_GOW:
-        games_on_whales(timezone=TIMEZONE, uid=UID, gid=GID)
-
-    if ENABLE_TRANSMISSION:
-        transmission(
+    if ENABLE_AIRSONIC:
+        airsonic(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            data_folder_root=HD_KUBE_DATA_PV_LOCATION,
-            vpn_provider=OPENVPN_PROVIDER,
-            vpn_username=OPENVPN_USERNAME,
-            vpn_password=OPENVPN_PASSWORD,
-            vpn_config=OPENVPN_CONFIG,
-            cidr=CIDR,
             hostname=KUBE_NODE_HOST,
             timezone=TIMEZONE,
             uid=UID,
             gid=GID,
         )
 
-    if ENABLE_AIRSONIC:
-        airsonic(
+    if ENABLE_BLUECHERRY:
+        bluecherry(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            recordings_folder="/mnt/8TB_01/dropbox/data/Security/BlueCherryKube",
             hostname=KUBE_NODE_HOST,
+            timezone=TIMEZONE,
+            mysql_root_password=BLUECHERRY_MYSQL_ROOT_PASSWORD,
+            bluecherry_password=BLUECHERRY_DB_USER_PASSWORD,
+            uid=UID,
+            gid=GID,
+        )
+
+    if ENABLE_DASHBOARD:
+        kube_dashboard(hostname=KUBE_NODE_HOST)
+
+    if ENABLE_DROPBOX:
+        dropbox(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
             timezone=TIMEZONE,
             uid=UID,
             gid=GID,
@@ -149,16 +133,19 @@ def main():
             gid=GID,
         )
 
-    if ENABLE_DROPBOX:
-        dropbox(
+    if ENABLE_GOW:
+        games_on_whales(timezone=TIMEZONE, uid=UID, gid=GID)
+
+    if ENABLE_MARIADB:
+        mariadb(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            timezone=TIMEZONE,
+            # hostname=KUBE_NODE_HOST,
             uid=UID,
             gid=GID,
         )
 
-    if ENABLE_UBOOQUITY:
-        ubooquity(
+    if ENABLE_MEALIE:
+        mealie(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
             hostname=KUBE_NODE_HOST,
             timezone=TIMEZONE,
@@ -166,8 +153,25 @@ def main():
             gid=GID,
         )
 
-    if ENABLE_WIKI_JS:
-        wiki_js(
+    if ENABLE_ML_FLOW:
+        ml_flow(
+            hostname=KUBE_NODE_HOST,
+            uid=UID,
+            gid=GID,
+        )
+
+    if ENABlE_NETBOOTXYZ:
+        netbootxyz(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            data_folder_root=HD_KUBE_DATA_PV_LOCATION,
+            hostname=KUBE_NODE_HOST,
+            timezone=TIMEZONE,
+            uid=UID,
+            gid=GID,
+        )
+
+    if ENABLE_NZBHYDRA2:
+        nzbhydra2(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
             data_folder_root=SSD_KUBE_DATA_PV_LOCATION,
             hostname=KUBE_NODE_HOST,
@@ -175,9 +179,6 @@ def main():
             uid=UID,
             gid=GID,
         )
-
-    if ENABLE_DASHBOARD:
-        kube_dashboard(hostname=KUBE_NODE_HOST)
 
     if ENABLE_ORGANIZR:
         organizr(
@@ -199,37 +200,49 @@ def main():
             gid=GID,
         )
 
-    if ENABLE_NZBHYDRA2:
-        nzbhydra2(
+    if ENABLE_PROMETHEUS:
+        prometheus(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            hostname=KUBE_NODE_HOST,
+            grafana_password=GRAFANA_PASSWORD,
+            ambient_weather_api_key=AMBIENT_WEATHER_API_KEY,
+            timezone=TIMEZONE,
+            uid=UID,
+            gid=GID,
+        )
+
+    if ENABLE_TRANSMISSION:
+        transmission(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            watch_folder="/mnt/500G_SSD/kube_config/data/transmission/watch",
+            completed_folder="/mnt/8TB_01/kube_config/data/transmission/completed",
+            incomplete_folder="/mnt/8TB_01/kube_config/data/transmission/incomplete",
+            vpn_provider=OPENVPN_PROVIDER,
+            vpn_username=OPENVPN_USERNAME,
+            vpn_password=OPENVPN_PASSWORD,
+            vpn_config=OPENVPN_CONFIG,
+            cidr=CIDR,
+            hostname=KUBE_NODE_HOST,
+            timezone=TIMEZONE,
+            uid=UID,
+            gid=GID,
+        )
+
+    if ENABLE_UBOOQUITY:
+        ubooquity(
+            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
+            hostname=KUBE_NODE_HOST,
+            timezone=TIMEZONE,
+            uid=UID,
+            gid=GID,
+        )
+
+    if ENABLE_WIKI_JS:
+        wiki_js(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
             data_folder_root=SSD_KUBE_DATA_PV_LOCATION,
             hostname=KUBE_NODE_HOST,
             timezone=TIMEZONE,
-            uid=UID,
-            gid=GID,
-        )
-
-    if ENABlE_NETBOOTXYZ:
-        netbootxyz(
-            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            data_folder_root=HD_KUBE_DATA_PV_LOCATION,
-            hostname=KUBE_NODE_HOST,
-            timezone=TIMEZONE,
-            uid=UID,
-            gid=GID,
-        )
-
-    if ENABLE_MARIADB:
-        mariadb(
-            config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            # hostname=KUBE_NODE_HOST,
-            uid=UID,
-            gid=GID,
-        )
-
-    if ENABLE_ML_FLOW:
-        ml_flow(
-            hostname=KUBE_NODE_HOST,
             uid=UID,
             gid=GID,
         )

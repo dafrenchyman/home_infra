@@ -15,7 +15,9 @@ from pulumi_kubernetes.networking.v1 import (
 
 def transmission(
     config_folder_root: str,
-    data_folder_root: str,
+    watch_folder: str,
+    completed_folder: str,
+    incomplete_folder: str,
     vpn_provider: str,
     vpn_username: str,
     vpn_password: str,
@@ -33,12 +35,27 @@ def transmission(
         access_mode="ReadWriteMany",
     )
 
-    transmission_data_volume, transmission_data_claim, _ = create_pvc(
-        name="transmission-data",
-        path=f"{data_folder_root}/transmission",
-        size="200Gi",
+    transmission_watch_volume, transmission_watch_claim, _ = create_pvc(
+        name="transmission-watch",
+        path=watch_folder,
+        size="20Gi",
         access_mode="ReadWriteMany",
     )
+
+    transmission_incomplete_volume, transmission_incomplete_claim, _ = create_pvc(
+        name="transmission-incomplete",
+        path=incomplete_folder,
+        size="100Gi",
+        access_mode="ReadWriteMany",
+    )
+
+    transmission_completed_volume, transmission_completed_claim, _ = create_pvc(
+        name="transmission-completed",
+        path=completed_folder,
+        size="100Gi",
+        access_mode="ReadWriteMany",
+    )
+
     clean_vpn_provider = vpn_provider.lower().replace("_", "-")
 
     Secret(
@@ -124,11 +141,31 @@ def transmission(
                         },
                     },
                     {
-                        "name": transmission_data_volume.metadata.apply(
+                        "name": transmission_completed_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "persistentVolumeClaim": {
-                            "claimName": transmission_data_claim.metadata.apply(
+                            "claimName": transmission_completed_claim.metadata.apply(
+                                lambda v: v["name"]
+                            )
+                        },
+                    },
+                    {
+                        "name": transmission_incomplete_volume.metadata.apply(
+                            lambda v: v["name"]
+                        ),
+                        "persistentVolumeClaim": {
+                            "claimName": transmission_incomplete_claim.metadata.apply(
+                                lambda v: v["name"]
+                            )
+                        },
+                    },
+                    {
+                        "name": transmission_watch_volume.metadata.apply(
+                            lambda v: v["name"]
+                        ),
+                        "persistentVolumeClaim": {
+                            "claimName": transmission_watch_claim.metadata.apply(
                                 lambda v: v["name"]
                             )
                         },
@@ -148,25 +185,22 @@ def transmission(
                         "mountPath": "/data/transmission-home",
                     },
                     {  # Folder to watch
-                        "name": transmission_data_volume.metadata.apply(
+                        "name": transmission_watch_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/watch",
-                        "subPath": "watch",
                     },
                     {  # Incomplete Torrents
-                        "name": transmission_data_volume.metadata.apply(
+                        "name": transmission_incomplete_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/incomplete",
-                        "subPath": "incomplete",
                     },
                     {  # Completed Torrents
-                        "name": transmission_data_volume.metadata.apply(
+                        "name": transmission_completed_volume.metadata.apply(
                             lambda v: v["name"]
                         ),
                         "mountPath": "/data/completed",
-                        "subPath": "completed",
                     },
                     {  # Needed for VPN
                         "name": "dev-tun",
