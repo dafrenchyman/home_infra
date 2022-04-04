@@ -6,11 +6,25 @@ def kube_dashboard(hostname: str):
         "kubernetes-dashboard",
         config=ChartOpts(
             chart="kubernetes-dashboard",
-            version="5.0.0",
+            version="5.2.0",
             fetch_opts=FetchOpts(
                 repo="https://kubernetes.github.io/dashboard/",
             ),
-            values={"ingress": {"enabled": "true", "hosts": [f"kube-dash.{hostname}"]}},
+            values={
+                "containerSecurityContext": {
+                    # "allowPrivilegeEscalation": "true",
+                    # "readOnlyRootFilesystem": "true",
+                    # "runAsUser": "1000",
+                    # "runAsGroup": "1000"
+                },
+                "ingress": {
+                    "enabled": "true",
+                    "annotations": {
+                        "nginx.ingress.kubernetes.io/backend-protocol": "HTTPS",
+                    },
+                    "hosts": [f"kube-dash.{hostname}"],
+                },
+            },
         ),
     )
     return

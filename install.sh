@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Setup metallb
+# IP range: 192.168.10.200-192.168.10.254
+
 # Setup Nvidia
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
 
@@ -22,6 +25,9 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 #helm repo add cetic https://cetic.github.io/helm-charts
 #helm repo add larribas https://larribas.me/helm-charts
 helm repo add deliveryhero https://charts.deliveryhero.io/
+
+# Setup pihole helm chart repo
+helm repo add mojo2600 https://mojo2600.github.io/pihole-kubernetes/
 
 helm repo update
 

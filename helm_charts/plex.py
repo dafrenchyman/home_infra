@@ -59,14 +59,14 @@ def plex(
         "plex",
         config=ChartOpts(
             chart="plex",
-            version="6.0.2",
+            version="6.2.0",
             fetch_opts=FetchOpts(
                 repo="https://k8s-at-home.com/charts/",
             ),
             values={
                 "image": {
                     "repository": "linuxserver/plex",
-                    "tag": "latest",
+                    "tag": "1.25.7",
                     "pullPolicy": "IfNotPresent",
                 },
                 "env": {

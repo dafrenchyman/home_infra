@@ -15,6 +15,7 @@ from helm_charts.mlflow import ml_flow
 from helm_charts.netbootxyz import netbootxyz
 from helm_charts.nzbhydra2 import nzbhydra2
 from helm_charts.organizr import organizr
+from helm_charts.pihole import pihole
 from helm_charts.plex import plex
 from helm_charts.prometheus import prometheus
 from helm_charts.transmission import transmission
@@ -39,6 +40,7 @@ OPENVPN_USERNAME = config.require("pia_username")
 OPENVPN_PASSWORD = config.require("pia_password")
 GRAFANA_PASSWORD = config.require("grafana_password")
 KUBE_NODE_HOST = config.require("kube_node_host")
+PIHOLE_ADMIN_PASSWORD = config.require("pihole_admin_password")
 PLEX_SHARES_JSON = config.require("plex_shares_json")
 
 GOV_DOCKER_RUNTIME = "nvidia"
@@ -46,7 +48,7 @@ GOW_GPU_UUID = "GPU-b141db0f-29f7-809e-16d5-582f02adb91c"
 
 ENABLE_AIRSONIC = True
 ENABLE_BLUECHERRY = True
-ENABLE_DASHBOARD = False
+ENABLE_DASHBOARD = True
 ENABLE_DROPBOX = False
 ENABLE_FRESH_RSS = True
 ENABLE_GOW = False
@@ -55,6 +57,7 @@ ENABLE_ML_FLOW = False
 ENABlE_NETBOOTXYZ = True
 ENABLE_NZBHYDRA2 = True
 ENABLE_ORGANIZR = True
+ENABLE_PIHOLE = True
 ENABLE_PLEX = True
 ENABLE_PROMETHEUS = True
 ENABLE_TRANSMISSION = True
@@ -104,7 +107,7 @@ def main():
     if ENABLE_BLUECHERRY:
         bluecherry(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            recordings_folder="/mnt/8TB_01/dropbox/data/Security/BlueCherryKube",
+            recordings_folder="/mnt/8TB_01/dropbox/Dropbox/Security/BlueCherryKube",
             hostname=KUBE_NODE_HOST,
             timezone=TIMEZONE,
             mysql_root_password=BLUECHERRY_MYSQL_ROOT_PASSWORD,
@@ -189,6 +192,14 @@ def main():
             gid=GID,
         )
 
+    if ENABLE_PIHOLE:
+        pihole(
+            hostname=KUBE_NODE_HOST,
+            timezone=TIMEZONE,
+            admin_password=PIHOLE_ADMIN_PASSWORD,
+            uid=1000,
+            gid=1000,
+        )
     if ENABLE_PLEX:
         plex(
             plex_shares_json=PLEX_SHARES_JSON,

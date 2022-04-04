@@ -71,10 +71,28 @@ def main():
         vpc_id=vpc.id,
     )
 
+    # Nat gateway
+    nat_gateway = pulumi_aws.ec2.NatGateway("nat-gateway", subnet_id=public_subnet.id)
+
+    # egress_only_internet_gateway = pulumi_aws.ec2.EgressOnlyInternetGateway(
+    #     "egress-only-gateway",
+    #     vpc_id=vpc.id,
+    # )
+
     route_table_jump_host = pulumi_aws.ec2.RouteTable(
         "ec2-route-table",
         vpc_id=vpc.id,
-        routes=[{"cidr_block": "0.0.0.0/0", "gateway_id": igw.id}],
+        routes=[
+            {"cidr_block": "0.0.0.0/0", "gateway_id": igw.id},
+            # {
+            #     "ipv6_cidr_block": "::/0",
+            #     "egress_only_gateway_id": egress_only_internet_gateway.id,
+            # },
+            {
+                "cidrBlock": "0.0.0.0/0",
+                "nat_gateway_id": nat_gateway.id,
+            },
+        ],
     )
 
     _ = pulumi_aws.ec2.RouteTableAssociation(
@@ -101,7 +119,7 @@ def main():
         "ec2-server",
         instance_type="t2.micro",
         vpc_security_group_ids=[security_group_server.id],
-        ami="ami-0892d3c7ee96c0bf7",  # Ubuntu Server 20.04 LTS
+        ami="ami-0892d3c7ee96c0bf7",  # "ami-074251216af698218", # ,  # Ubuntu Server 20.04 LTS
         subnet_id=public_subnet.id,
         associate_public_ip_address=False,
         key_name=key.key_name,

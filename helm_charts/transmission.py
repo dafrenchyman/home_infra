@@ -82,7 +82,7 @@ def transmission(
             values={
                 "image": {
                     "repository": "haugene/transmission-openvpn",
-                    "tag": "latest",
+                    "tag": "4.0",
                     "pullPolicy": "IfNotPresent",
                 },
                 "env": [
@@ -122,10 +122,10 @@ def transmission(
                         "name": "TRANSMISSION_IDLE_SEEDING_LIMIT_ENABLED",
                         "value": "true",
                     },
-                    {
-                        "name": "TRANSMISSION_WEB_UI",
-                        "value": "flood-for-transmission",
-                    },
+                    # {
+                    #     "name": "TRANSMISSION_WEB_UI",
+                    #     "value": "default",
+                    # },
                     {"name": "WEBPROXY_ENABLED", "value": "false"},
                     {"name": "TZ", "value": timezone},
                 ],
