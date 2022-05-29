@@ -26,24 +26,35 @@ from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
 from services.misc import apple_service, nginx_service
 
 config = pulumi.Config()
-AMBIENT_WEATHER_API_KEY = config.require("ambient_weather_api_key")
-BLUECHERRY_MYSQL_ROOT_PASSWORD = config.require("bluecherry_mysql_root_password")
-BLUECHERRY_DB_USER_PASSWORD = config.require("bluecherry_db_user_password")
 
+# Common settings
 CIDR = config.require("CIDR")
 TIMEZONE = config.require("timezone")
 UID = config.require("uid")
 GID = config.require("gid")
+
+# Ambient Weather settings
+AMBIENT_WEATHER_API_KEY = config.require("ambient_weather_api_key")
+
+# Bluecherry settings
+BLUECHERRY_RECORDINGS_FOLDER = config.require("bluecherry_recordings_folder")
+BLUECHERRY_MYSQL_ROOT_PASSWORD = config.require("bluecherry_mysql_root_password")
+BLUECHERRY_DB_USER_PASSWORD = config.require("bluecherry_db_user_password")
+
+# Transmission Settings
 OPENVPN_PROVIDER = config.require("openvpn_provider")
 OPENVPN_CONFIG = config.require("openvpn_config")
 OPENVPN_USERNAME = config.require("pia_username")
 OPENVPN_PASSWORD = config.require("pia_password")
+TRANSMISSION_COMPLETED_FOLDER = config.require("transmission_completed_folder")
+TRANSMISSION_INCOMPLETE_FOLDER = config.require("transmission_incomplete_folder")
+
 GRAFANA_PASSWORD = config.require("grafana_password")
 KUBE_NODE_HOST = config.require("kube_node_host")
 PIHOLE_ADMIN_PASSWORD = config.require("pihole_admin_password")
 PLEX_SHARES_JSON = config.require("plex_shares_json")
 
-GOV_DOCKER_RUNTIME = "nvidia"
+GOW_DOCKER_RUNTIME = "nvidia"
 GOW_GPU_UUID = "GPU-b141db0f-29f7-809e-16d5-582f02adb91c"
 
 ENABLE_AIRSONIC = True
@@ -107,7 +118,7 @@ def main():
     if ENABLE_BLUECHERRY:
         bluecherry(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
-            recordings_folder="/mnt/8TB_01/dropbox/Dropbox/Security/BlueCherryKube",
+            recordings_folder=BLUECHERRY_RECORDINGS_FOLDER,
             hostname=KUBE_NODE_HOST,
             timezone=TIMEZONE,
             mysql_root_password=BLUECHERRY_MYSQL_ROOT_PASSWORD,
@@ -226,8 +237,8 @@ def main():
         transmission(
             config_folder_root=SSD_KUBE_CONFIG_PV_LOCATION,
             watch_folder="/mnt/500G_SSD/kube_config/data/transmission/watch",
-            completed_folder="/mnt/8TB_01/kube_config/data/transmission/completed",
-            incomplete_folder="/mnt/8TB_01/kube_config/data/transmission/incomplete",
+            completed_folder=TRANSMISSION_COMPLETED_FOLDER,
+            incomplete_folder=TRANSMISSION_INCOMPLETE_FOLDER,
             vpn_provider=OPENVPN_PROVIDER,
             vpn_username=OPENVPN_USERNAME,
             vpn_password=OPENVPN_PASSWORD,

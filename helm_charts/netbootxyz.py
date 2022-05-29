@@ -37,7 +37,7 @@ def netbootxyz(
             values={
                 "image": {
                     "repository": "linuxserver/netbootxyz",
-                    "tag": "0.6.5",
+                    "tag": "0.6.7",
                     "pullPolicy": "IfNotPresent",
                 },
                 "env": {

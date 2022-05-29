@@ -31,11 +31,16 @@ def airsonic(config_folder_root: str, hostname: str, timezone: str, uid=1000, gi
         "airsonic",
         config=ChartOpts(
             chart="airsonic",
-            version="6.0.0",
+            version="6.3.2",
             fetch_opts=FetchOpts(
                 repo="https://k8s-at-home.com/charts/",
             ),
             values={
+                "image": {
+                    "repository": "airsonicadvanced/airsonic-advanced",
+                    "tag": "latest",
+                    "pullPolicy": "Always",
+                },
                 "env": {
                     "TZ": timezone,
                     "PUID": uid,

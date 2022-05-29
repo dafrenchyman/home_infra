@@ -14,7 +14,7 @@ def organizr(config_folder_root: str, hostname: str, timezone: str, uid=1000, gi
         "organizr",
         config=ChartOpts(
             chart="organizr",
-            version="7.0.1",
+            version="7.3.2",
             fetch_opts=FetchOpts(
                 repo="https://k8s-at-home.com/charts/",
             ),
@@ -22,7 +22,7 @@ def organizr(config_folder_root: str, hostname: str, timezone: str, uid=1000, gi
                 "image": {
                     "repository": "organizr/organizr",
                     "tag": "latest",
-                    "pullPolicy": "IfNotPresent",
+                    "pullPolicy": "Always",
                 },
                 "env": {
                     "TZ": timezone,
