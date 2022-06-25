@@ -25,7 +25,7 @@ def mariadb(
         "mariadb",
         config=ChartOpts(
             chart="mariadb",
-            version="9.8.1",
+            version="11.0.12",
             fetch_opts=FetchOpts(
                 repo="https://charts.bitnami.com/bitnami",
             ),

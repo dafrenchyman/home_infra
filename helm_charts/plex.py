@@ -66,7 +66,7 @@ def plex(
             values={
                 "image": {
                     "repository": "linuxserver/plex",
-                    "tag": "1.26.2",
+                    "tag": "1.27.1",
                     "pullPolicy": "IfNotPresent",
                 },
                 "env": {

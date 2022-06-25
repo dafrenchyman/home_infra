@@ -32,7 +32,7 @@ def bluecherry(
         "bluecherry-mysql",
         config=ChartOpts(
             chart="mysql",
-            version="8.8.14",
+            version="9.1.6",
             fetch_opts=FetchOpts(
                 repo="https://charts.bitnami.com/bitnami",
             ),
